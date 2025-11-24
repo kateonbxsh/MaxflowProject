@@ -28,7 +28,7 @@ jobs:
       - name: Try to restore opam cache
         if: runner.os != 'Windows'
         id: opam-cache
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: "~/.opam"
           key: ${{ matrix.os }}-${{ matrix.ocaml-version }}  
