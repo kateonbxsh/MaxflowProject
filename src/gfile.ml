@@ -3,6 +3,31 @@ open Printf
     
 type path = string
 
+let export path graph = 
+    let ff = open_out path in
+    
+    fprintf ff 
+"
+digraph cool_generated_graph {
+    fontname=\"Helvetica,Arial,sans-serif\"
+	  node [fontname=\"Helvetica,Arial,sans-serif\"]
+	  edge [fontname=\"Helvetica,Arial,sans-serif\"]
+	  rankdir=LR;
+	  node [shape = circle];";
+
+    let print_arc arc =
+        fprintf ff "
+   %d -> %d [label = \"%s\"];" 
+        arc.src arc.tgt arc.lbl;
+    in e_iter graph print_arc;
+    
+    fprintf ff "
+}";
+
+    close_out ff
+  ;;
+
+
 (* Format of text files:
    % This is a comment
 
