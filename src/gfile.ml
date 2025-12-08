@@ -1,13 +1,13 @@
 open Graph
 open Printf
-    
+
 type path = string
 
 let export path graph = 
-    let ff = open_out path in
-    
-    fprintf ff 
-"
+  let ff = open_out path in
+
+  fprintf ff 
+    "
 digraph cool_generated_graph {
     fontname=\"Helvetica,Arial,sans-serif\"
 	  node [fontname=\"Helvetica,Arial,sans-serif\"]
@@ -15,17 +15,17 @@ digraph cool_generated_graph {
 	  rankdir=LR;
 	  node [shape = circle];";
 
-    let print_arc arc =
-        fprintf ff "
-   %d -> %d [label = \"%s\"];" 
-        arc.src arc.tgt arc.lbl;
-    in e_iter graph print_arc;
-    
+  let print_arc arc =
     fprintf ff "
+   %d -> %d [label = \"%s\"];" 
+      arc.src arc.tgt arc.lbl;
+  in e_iter graph print_arc;
+
+  fprintf ff "
 }";
 
-    close_out ff
-  ;;
+  close_out ff
+;;
 
 
 (* Format of text files:
@@ -55,7 +55,7 @@ let compute_y id =
   let sgn = if delta mod 2 = 0 then -1 else 1 in
 
   300 + sgn * (delta / 2) * 100
-  
+
 
 let write_file path graph =
 
@@ -71,9 +71,9 @@ let write_file path graph =
 
   (* Write all arcs *)
   let _ = e_fold graph (fun count arc -> fprintf ff "e %d %d %d %s\n" arc.src arc.tgt count arc.lbl ; count + 1) 0 in
-  
+
   fprintf ff "\n%% End of graph\n" ;
-  
+
   close_out ff ;
   ()
 
@@ -133,7 +133,7 @@ let from_file path =
   in
 
   let final_graph = loop empty_graph in
-  
+
   close_in infile ;
   final_graph
-  
+
