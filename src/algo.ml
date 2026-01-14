@@ -37,17 +37,11 @@ let update_augmentations gr path aug =
 
 let residual_to_flow initial residual =
   let update_initial_arc_from_residual initial_graph initial_arc = 
-    match (find_arc residual initial_arc.tgt initial_arc.src) with
+    match (find_arc residual initial_arc.src initial_arc.tgt) with
     | None -> initial_graph
-    | Some residual_arc -> match (find_arc initial initial_arc.tgt initial_arc.src) with
-      | None -> new_arc initial_graph {
+    | Some residual_arc -> new_arc initial_graph {
         initial_arc with lbl = {
-          initial_arc.lbl with flow = residual_arc.lbl
-          }
-        };
-     | Some anti_parallel_arc -> new_arc initial_graph {
-        initial_arc with lbl = {
-          initial_arc.lbl with flow = max (residual_arc.lbl - anti_parallel_arc.lbl.capacity) 0
+          initial_arc.lbl with flow = max (initial_arc.lbl.capacity - residual_arc.lbl) 0
           }
         };
   in e_fold initial (update_initial_arc_from_residual) initial;;
