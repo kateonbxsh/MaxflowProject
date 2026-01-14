@@ -1,0 +1,258 @@
+open Graph
+open Algo
+
+type flight = {
+  id: int;
+  departure_airport: string;
+  arrival_airport: string;
+  departure_time: int;
+  arrival_time: int;
+}
+
+let read_flights_from_file path : flight list =
+  let ic = open_in path in
+  let flights = ref [] in
+  let id_counter = ref 0 in
+
+  try
+    while true do
+      let line = input_line ic in
+      let line = String.trim line in
+      if line <> "" then begin
+        try
+          (* AIRPORT -> AIRPORT | HH:MM -> HH:MM *)
+          Scanf.sscanf line "%s -> %s | %d:%d -> %d:%d"
+            (fun dep_airport arr_airport dep_h dep_m arr_h arr_m ->
+              let dep_time = dep_h * 60 + dep_m in
+              let arr_time = arr_h * 60 + arr_m in
+              let f = { id = !id_counter;
+                        departure_airport;
+                        arrival_airport;
+                        departure_time = dep_time;
+                        arrival_time = arr_time } in
+              flights := f :: !flights;
+              id_counter := !id_counter + 1
+            )
+        with
+        | Scanf.Scan_failure msg
+        | Failure msg
+        | End_of_file ->
+            failwith (Printf.sprintf "Failed to parse line: '%s'" line)
+      end
+    done;
+    []
+  with End_of_file ->
+    close_in ic;
+    List.rev !flights
+
+(* two flights are compatible if they are 30 mins away from each other *)
+let compatible f1 f2 =
+  f1.arrival_airport = f2.departure_airport &&
+  (f1.arrival_time + 30 mod (24 * 60)) <= f2.departure_time
+
+let s = 0
+let t = 1
+let si i = 2 + 2*i
+let di i = 2 + 2*i + 1
+
+type bounded_flow = {
+  mutable flow: int;
+  lower: int;
+  capacity: int;
+}
+
+(* Build the bounded flow graph *)
+let build_bounded_graph (flights: flight list) : bounded_flow graph =
+
+  let g = empty_graph in
+  let g = new_node g s in
+  let g = new_node g t in
+
+  (* Add flight nodes *)
+  let g =
+    List.fold_left (fun g f ->
+      let g = new_node g (si f.id) in
+      let g = new_node g (di f.id) in
+      g
+    ) g flights
+  in
+
+  (* Helper to add bounded edge *)
+  let add_arc g u v lower upper =
+    let lbl = {flow=0; lower=lower; capacity=upper} in
+    new_arc g {src=u; tgt=v; lbl}
+  in
+
+  (* s -> si [0,1] *)
+  let g = List.fold_left (fun g f -> add_arc g s (si f.id) 0 1) g flights in
+  (* si -> di [1,1] *)
+  let g = List.fold_left (fun g f -> add_arc g (si f.id) (di f.id) 1 1) g flights in
+  (* di -> t [0,1] *)
+  let g = List.fold_left (fun g f -> add_arc g (di f.id) t 0 1) g flights in
+  (* di -> sj [0,1] if compatible *)
+  let g =
+    List.fold_left (fun g f1 ->
+      List.fold_left (fun g f2 ->
+        if compatible f1 f2 then add_arc g (di f1.id) (si f2.id) 0 1
+        else g
+      ) g flights
+    ) g flights
+  in
+  (* s -> t [0,∞] *)
+  let g = add_arc g s t 0 max_int in
+  g
+
+
+(* compute and returns demands from lower bounds *)
+let compute_demands (g: bounded_flow graph) : int array =
+  let n = n_fold g (fun acc id -> max acc id) 0 + 1 in
+  let demand = Array.make n 0 in
+  e_iter g (fun arc ->
+    demand.(arc.src) <- demand.(arc.src) - arc.lbl.lower;
+    demand.(arc.tgt) <- demand.(arc.tgt) + arc.lbl.lower
+  );
+  demand
+
+let add_super_nodes g demand: bounded_flow graph * id * id * int =
+  let n = Array.length demand in
+  let ss = n in
+  let tt = n + 1 in
+  let g = new_node g ss in
+  let g = new_node g tt in
+
+  let (g, total_demand) =
+    Array.fold_left (fun (g, total) v ->
+      let d = demand.(v) in
+      if d > 0 then
+        (new_arc g {src=ss; tgt=v; lbl={flow=0; lower=0; capacity=d}}, total + d)
+      else if d < 0 then
+        (new_arc g {src=v; tgt=tt; lbl={flow=0; lower=0; capacity=(-d)}}, total)
+      else
+        (g, total)
+    ) (g, 0) (Array.init n (fun i -> i))
+  in
+
+  (g, ss, tt, total_demand)
+
+(* recover original flows by adding lower bounds back *)
+let recover_flows (g: bounded_flow graph) : unit =
+  e_iter g (fun arc ->
+    arc.lbl.flow <- arc.lbl.flow + arc.lbl.lower
+  )
+
+type schedule_arc = {
+  from_airport: string;
+  to_airport: string;
+  flow: int;
+}
+
+let graph_to_schedule g flights : schedule_arc list =
+  e_fold g (fun acc arc ->
+    if arc.lbl.flow > 0 then
+      let f_from = List.find_opt (fun f -> si f.id = arc.src || di f.id = arc.src) flights in
+      let f_to = List.find_opt (fun f -> si f.id = arc.tgt || di f.id = arc.tgt) flights in
+      match f_from, f_to with
+      | Some ff, Some ft ->
+          {from_airport=ff.arrival_airport; to_airport=ft.departure_airport; flow=arc.lbl.flow} :: acc
+      | _ -> acc
+    else acc
+  ) []
+
+
+let airline_schedule flights k : bounded_flow graph option =
+
+  let g = build_bounded_graph flights in
+
+  let demand = compute_demands g in
+
+  (* add SS and TT *)
+  let (g, ss, tt, total_demand) = add_super_nodes g demand in
+
+  let g = new_arc g {src=s; tgt=t; lbl={flow=0; lower=0; capacity=max_int}} in
+
+  let g = apply_ford_fulkerson g ss tt in
+
+  (* check if demand is satisfied *)
+  let flow_from_ss =
+    List.fold_left (fun acc arc -> acc + arc.lbl.flow) 0 (out_arcs g ss)
+  in
+
+  if flow_from_ss <> total_demand then None
+  else begin
+    recover_flows g;
+    Some g
+  end;;
+
+let export_schedule path g flights =
+  let ff = open_out path in
+
+  (* Start DOT graph *)
+  Printf.fprintf ff "digraph airline_schedule {\n";
+  Printf.fprintf ff "  fontname=\"Helvetica,Arial,sans-serif\";\n";
+  Printf.fprintf ff "  node [fontname=\"Helvetica,Arial,sans-serif\"];\n";
+  Printf.fprintf ff "  edge [fontname=\"Helvetica,Arial,sans-serif\"];\n";
+  Printf.fprintf ff "  rankdir=LR;\n";
+  Printf.fprintf ff "  node [shape=circle];\n";
+
+  (* Helper: get airport name from node id *)
+  let node_name id =
+    match List.find_opt (fun f -> si f.id = id || di f.id = id) flights with
+    | Some f -> f.departure_airport ^ "_" ^ string_of_int f.id
+    | None -> if id = s then "source" else if id = t then "sink" else "unknown"
+  in
+
+  (* Print each arc with flow as label *)
+  let print_arc arc =
+    if arc.lbl.flow > 0 then
+      let src_name = node_name arc.src in
+      let tgt_name = node_name arc.tgt in
+      Printf.fprintf ff "  \"%s\" -> \"%s\" [label=\"%d\"];\n" src_name tgt_name arc.lbl.flow
+  in
+
+  e_iter g print_arc;
+
+  (* Close DOT graph *)
+  Printf.fprintf ff "}\n";
+  close_out ff;;
+
+let graph_to_schedule g flights : schedule_arc list =
+  e_fold g (fun acc arc ->
+    if arc.lbl.flow > 0 then
+      let f_from = List.find_opt (fun f -> si f.id = arc.src || di f.id = arc.src) flights in
+      let f_to = List.find_opt (fun f -> si f.id = arc.tgt || di f.id = arc.tgt) flights in
+      match f_from, f_to with
+      | Some ff, Some ft ->
+          {from_airport=ff.arrival_airport; to_airport=ft.departure_airport; flow=arc.lbl.flow} :: acc
+      | _ -> acc
+    else acc
+  ) []
+
+let export_schedule_text path g flights =
+  let ff = open_out path in
+
+  
+  let print_arc arc =
+    if arc.lbl.flow > 0 then
+
+      let f_from = List.find_opt (fun f -> si f.id = arc.src || di f.id = arc.src) flights in
+
+      let f_to = List.find_opt (fun f -> si f.id = arc.tgt || di f.id = arc.tgt) flights in
+
+      match f_from, f_to with
+      | Some ff, Some ft ->
+          Printf.fprintf ff "Airplane %d: %s -> %s\n"
+            arc.lbl.flow ff.arrival_airport ft.departure_airport
+      | Some ff, None when arc.tgt = t ->
+
+          Printf.fprintf ff "Airplane %d: %s -> END\n"
+            arc.lbl.flow ff.arrival_airport
+      | None, Some ft when arc.src = s ->
+
+          Printf.fprintf ff "Airplane %d: START -> %s\n"
+            arc.lbl.flow ft.departure_airport
+      | _ -> ()
+  in
+
+  e_iter g print_arc;
+  close_out ff;;
+
