@@ -31,7 +31,16 @@ Build the project
 dune build / make build
 ```
 
-The executable supports two modes:
+### Ease of use
+
+You can easily run a demo of each mode using the following commands:
+```
+make demo-flow
+make demo-scheduling
+```
+Results will be stored in `result` directory
+
+If you want to run the program on specific files, the executable supports two modes:
 
 - `flow`
 - `scheduling`
@@ -43,7 +52,7 @@ The executable supports two modes:
 ```
 Graph files are located in the `graphs/` folder.
 
-#### Example
+Example:
 
 ```bash
 ./maxflow flow graphs/graph3.txt 0 5 result
@@ -65,7 +74,7 @@ Example schedules are located in the `scheduling/` folder.
 ./maxflow scheduling infile airplane_count outfile [svgfile]
 ```
 
-#### Example
+Example:
 
 ```bash
 ./maxflow scheduling scheduling/schedule1.txt 10 output
@@ -74,9 +83,7 @@ Example schedules are located in the `scheduling/` folder.
 This generates:
 - `output.schedule`  (text schedule)
 - `output.dot`       (graph visualization)
-- optionally `output.svg`
-
-
+- optionally `svgfile.svg`
 
 ## How the project works
 
