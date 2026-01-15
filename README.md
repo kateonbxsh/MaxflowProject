@@ -12,11 +12,19 @@ It can be used to:
 
 ![example schedule](./img/example_schedule.svg)
 
-<center>
+<p align="center">
 
 *Example scheduling of 15 airplanes across 26 flights*
 
-</center>
+</p>
+
+<p align="center">
+
+<img width=400 src="./img/example_text_schedule.png"/>
+
+*Example resulting textual schedule*
+
+</p>
 
 ## Dependencies
 
