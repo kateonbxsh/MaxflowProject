@@ -213,7 +213,8 @@ Given an airplane count `C`, the Airline Scheduling Problem circulation graph is
 Two flights are compatible if the second is spaced out enough that it can be joined by the same airplane after the first has landed, in this project, I have made the arbitrary choice to make that condition be:
 - Flight 1's destination airport is the same as Flight 2
 - Flight 1's arrival time is at least 30 minutes before Flight 2
-That being said, this condition can be further developer to allow airplanes to join neighboring airports for example.
+
+That being said, this condition can be further developed to allow airplanes to join neighboring airports for example.
 
 As explained above, after converting this circulation graph to its maxflow equivalent and adding the super source and super sink, if computing the maximum flow satisfies the condition `sum of outgoing flow from SS = total demand`, the demands of the circulation graph are satisfied.
 
