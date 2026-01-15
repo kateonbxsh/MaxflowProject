@@ -15,17 +15,15 @@ edit:
 
 demo-flow: build
 	mkdir -p result
-	@echo "\n Running Ford-Fulkerson demo \n"
+	@echo "Running Ford-Fulkerson demo"
 	./maxflow.exe flow graphs/graph7.txt 1 9 result/result-flowdemo result/result-flowdemo-svg
-	@echo "\n Result stored in result/\n"
-	@cat outfile
+	@echo "Result stored in result/"
 
 demo-scheduling: build
 	mkdir -p result
 	@echo "\n Running Airplane Scheduling demo \n"
 	./maxflow.exe scheduling scheduling/schedule3.txt 9 result/result-schdemo result/result-schdemo-svg
-	@echo "\n Result stored in result/\n"
-	@cat outfile
+	@echo "Result stored in result/"
 
 clean:
 	find -L . -name "*~" -delete

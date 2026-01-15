@@ -85,24 +85,32 @@ This generates:
 The project implements the **Ford–Fulkerson algorithm**, which calculates the maximum flow in an oriented graph.
 Consider the following example:
 
-![graph](./img/flow_graph_empty.png)
+<p align="center">
+
+<img height=200 alt="Demand definition" src="./img/flow_graph_empty.png">
+
+</p>
 
 Each edge has an initial flow value (mostly 0) and a maximum flow capacity, the **Ford–Fulkerson algorithm** computes the maximum flow that can be passed between two nodes (namely source and sink), in our case if we choose 0 as the source, and 5 as the sink:
 
-![graph](./img/flow_graph_computed.png)
+<p align="center">
+
+<img height=200 alt="Demand definition" src="./img/flow_graph_computed.png">
+
+</p>
 
 The maximum flow we can pass is 25. 
 The algorithm works by converting the flow graph into a residual flow graph, and finding augmenting paths exhaustively. The graph is valid as long as, for each node, the sum of incoming flow is equal to the sum of outgoing flow:
 
-<center>
+<p align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://latex.codecogs.com/svg.latex?%5Cdpi%7B150%7D%5Cbg%7Btransparent%7D%5Ccolor%7Bwhite%7D%5Csum_%7Bu%20%5Cin%20V%7D%20f(u,v)%20%3D%20%5Csum_%7Bw%20%5Cin%20V%7D%20f(v,w)">
-  <source media="(prefers-color-scheme: light)" srcset="https://latex.codecogs.com/svg.latex?%5Cdpi%7B150%7D%5Cbg%7Btransparent%7D%5Ccolor%7Bblack%7D%5Csum_%7Bu%20%5Cin%20V%7D%20f(u,v)%20%3D%20%5Csum_%7Bw%20%5Cin%20V%7D%20f(v,w)">
-  <img alt="Flow conservation equation" src="https://latex.codecogs.com/svg.latex?%5Cdpi%7B150%7D%5Cbg%7Btransparent%7D%5Ccolor%7Bblack%7D%5Csum_%7Bu%20%5Cin%20V%7D%20f(u,v)%20%3D%20%5Csum_%7Bw%20%5Cin%20V%7D%20f(v,w)">
+  <source media="(prefers-color-scheme: dark)" srcset="./img/formulas/sum_of_flow_dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="./img/formulas/sum_of_flow_light.png">
+  <img alt="Demand definition" src="./img/formulas/sum_of_flow_light.png">
 </picture>
 
-</center>
+</p>
 
 Except for the sink and the source (net outflow, net inflow)
 
@@ -126,27 +134,27 @@ A bounded ciculation model is the generalization of network flow problems, with 
 - capacity `u(e)`
 - flow `f(e)` such that:
 
-<center>
+<p align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://latex.codecogs.com/svg.latex?%5Cdpi%7B180%7D%5Cbg%7Btransparent%7D%5Ccolor%7Bwhite%7Dl(e)%20%5Cle%20f(e)%20%5Cle%20c(e)">
-  <source media="(prefers-color-scheme: light)" srcset="https://latex.codecogs.com/svg.latex?%5Cdpi%7B180%7D%5Cbg%7Btransparent%7D%5Ccolor%7Bblack%7Dl(e)%20%5Cle%20f(e)%20%5Cle%20c(e)">
-  <img alt="Lower bound ≤ flow ≤ capacity" src="https://latex.codecogs.com/svg.latex?%5Cdpi%7B180%7D%5Cbg%7Btransparent%7D%5Ccolor%7Bblack%7Dl(e)%20%5Cle%20f(e)%20%5Cle%20c(e)">
+  <source media="(prefers-color-scheme: dark)" srcset="./img/formulas/flow_condition_dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="./img/formulas/flow_condition_light.png">
+  <img width=180 alt="Demand definition" src="./img/formulas/flow_condition_light.png">
 </picture>
 
-</center>
+</p>
 
 Each vertex `v` is also defined with a demand, that represents how much flow that node requires, the formula for the demand of a vertex is defined as the difference between incoming and outgoing lower bounds:
 
-<center>
+<p align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://latex.codecogs.com/svg.latex?%5Cdpi%7B150%7D%5Cbg%7Btransparent%7D%5Ccolor%7Bwhite%7Dd(v)%20%3D%20%5Csum_%7B(v,w)%20%5Cin%20E%7D%20l_%7Bvw%7D%20-%20%5Csum_%7B(u,v)%20%5Cin%20E%7D%20l_%7Buv%7D">
-  <source media="(prefers-color-scheme: light)" srcset="https://latex.codecogs.com/svg.latex?%5Cdpi%7B150%7D%5Cbg%7Btransparent%7D%5Ccolor%7Bblack%7Dd(v)%20%3D%20%5Csum_%7B(v,w)%20%5Cin%20E%7D%20l_%7Bvw%7D%20-%20%5Csum_%7B(u,v)%20%5Cin%20E%7D%20l_%7Buv%7D">
-  <img alt="Demand definition" src="https://latex.codecogs.com/svg.latex?%5Cdpi%7B150%7D%5Cbg%7Btransparent%7D%5Ccolor%7Bblack%7Dd(v)%20%3D%20%5Csum_%7B(v,w)%20%5Cin%20E%7D%20l_%7Bvw%7D%20-%20%5Csum_%7B(u,v)%20%5Cin%20E%7D%20l_%7Buv%7D">
+  <source media="(prefers-color-scheme: dark)" srcset="./img/formulas/demand_condition_dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="./img/formulas/demand_condition_light.png">
+  <img alt="Demand definition" src="./img/formulas/demand_condition_light.png">
 </picture>
 
-</center>
+</p>
 
 (this is widely used in problems like the Circulation-Demand problem, where some factories produce goods and some villages that each have a demand rate)
 
@@ -156,25 +164,29 @@ The Ford-Fulkerson cannot be applied directly to a bounded circulation graph, as
 
 After updating the flows and demands, two additional nodes need to be added, a super source `(SS)` and a super sink `(TT)`, their relationship with the rest of the vertices is defined like so:
 
-<center>
+<p align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://latex.codecogs.com/svg.latex?%5Cdpi%7B150%7D%5Cbg%7Btransparent%7D%5Ccolor%7Bwhite%7D%5Ctext%7Bfor%20each%20vertex%20%7Dv%3A%20%5Cbegin%7Bcases%7D%20SS%20%5Clongrightarrow%20v%2C%20%26%20f(SS%2C%20v)%20%3D%20-d(v)%20%5Cquad%20%5Ctext%7Bif%20%7D%20d(v)%20%3C%200%20%5C%5C%5B2mm%5D%20v%20%5Clongrightarrow%20TT%2C%20%26%20f(v%2C%20TT)%20%3D%20d(v)%20%5Cquad%20%5Ctext%7Bif%20%7D%20d(v)%20%3E%200%20%5Cend%7Bcases%7D">
-  <source media="(prefers-color-scheme: light)" srcset="https://latex.codecogs.com/svg.latex?%5Cdpi%7B150%7D%5Cbg%7Btransparent%7D%5Ccolor%7Bblack%7D%5Ctext%7Bfor%20each%20vertex%20%7Dv%3A%20%5Cbegin%7Bcases%7D%20SS%20%5Clongrightarrow%20v%2C%20%26%20f(SS%2C%20v)%20%3D%20-d(v)%20%5Cquad%20%5Ctext%7Bif%20%7D%20d(v)%20%3C%200%20%5C%5C%5B2mm%5D%20v%20%5Clongrightarrow%20TT%2C%20%26%20f(v%2C%20TT)%20%3D%20d(v)%20%5Cquad%20%5Ctext%7Bif%20%7D%20d(v)%20%3E%200%20%5Cend%7Bcases%7D">
-  <img alt="Super source and super sink connections" src="https://latex.codecogs.com/svg.latex?%5Cdpi%7B150%7D%5Cbg%7Btransparent%7D%5Ccolor%7Bblack%7D%5Ctext%7Bfor%20each%20vertex%20%7Dv%3A%20%5Cbegin%7Bcases%7D%20SS%20%5Clongrightarrow%20v%2C%20%26%20f(SS%2C%20v)%20%3D%20-d(v)%20%5Cquad%20%5Ctext%7Bif%20%7D%20d(v)%20%3C%200%20%5C%5C%5B2mm%5D%20v%20%5Clongrightarrow%20TT%2C%20%26%20f(v%2C%20TT)%20%3D%20d(v)%20%5Cquad%20%5Ctext%7Bif%20%7D%20d(v)%20%3E%200%20%5Cend%7Bcases%7D">
+  <source media="(prefers-color-scheme: dark)" srcset="./img/formulas/for_each_vertex_dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="./img/formulas/for_each_vertex_light.png">
+  <img height=60 alt="Demand definition" src="./img/formulas/for_each_vertex_light.png">
 </picture>
 
-</center>
+</p>
 
 Computing the Ford-Fulkerson algorithm such that all net outflow coming from SS is equal to the sum of the positive demands of the graph:
 
 <center>
 
+<p align="center">
+
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://latex.codecogs.com/svg.latex?%5Cdpi%7B150%7D%5Cbg%7Btransparent%7D%5Ccolor%7Bwhite%7D%5Csum_%7B(SS,v)%5Cin%20E%7D%20f(SS,v)%20%3D%20%5Csum_%7Bd(v)%20%3E%200%7D%20d(v)">
-  <source media="(prefers-color-scheme: light)" srcset="https://latex.codecogs.com/svg.latex?%5Cdpi%7B150%7D%5Cbg%7Btransparent%7D%5Ccolor%7Bblack%7D%5Csum_%7B(SS,v)%5Cin%20E%7D%20f(SS,v)%20%3D%20%5Csum_%7Bd(v)%20%3E%200%7D%20d(v)">
-  <img alt="Total flow from super source" src="https://latex.codecogs.com/svg.latex?%5Cdpi%7B150%7D%5Cbg%7Btransparent%7D%5Ccolor%7Bblack%7D%5Csum_%7B(SS,v)%5Cin%20E%7D%20f(SS,v)%20%3D%20%5Csum_%7Bd(v)%20%3E%200%7D%20d(v)">
+  <source media="(prefers-color-scheme: dark)" srcset="./img/formulas/sum_of_SS_dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="./img/formulas/sum_of_SS_light.png">
+  <img height=60 alt="Demand definition" src="./img/formulas/sum_of_SS_light.png">
 </picture>
+
+</p>
 
 </center>
 
@@ -186,11 +198,15 @@ Given an airplane count `C`, the Airline Scheduling Problem circulation graph is
 
 <center>
 
+<p align="center">
+
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./img/airline_scheduling_dark_mode.png">
-  <source media="(prefers-color-scheme: light)" srcset="./img/airline_scheduling_light_mode.png">
-  <img alt="formula" src="./img/airline_scheduling_light_mode.png">
+  <source media="(prefers-color-scheme: dark)" srcset="./img/formulas/airline_scheduling_dark_mode.png">
+  <source media="(prefers-color-scheme: light)" srcset="./img/formulas/airline_scheduling_light_mode.png">
+  <img height=250 alt="formula" src="./img/formulas/airline_scheduling_light_mode.png">
 </picture>
+
+</p>
 
 </center>
 

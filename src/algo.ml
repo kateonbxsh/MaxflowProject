@@ -47,15 +47,17 @@ let residual_to_flow initial residual =
   in e_fold initial (update_initial_arc_from_residual) initial;;
 
 let apply_ford_fulkerson initial src tgt =
+  let maxflow = ref 0 in 
   let residual_graph = flow_to_residual (reset_graph initial) in
     let rec loop current_graph =
       match (find_path current_graph src tgt) with
-      | None -> Printf.printf "could not find path, ending algorithm\n" ; current_graph
+      | None -> Printf.printf "could not find path, ending algorithm, maximum flow: %d\n" !maxflow ; current_graph
       | Some path -> 
         Printf.printf "found path: ";
         List.iter (fun arc -> Printf.printf "%d -> " arc.src) path;
         Printf.printf "%d\nfinding min augment\n" tgt;
         let min_aug = get_path_min_augmentation path in
+          maxflow := min_aug + !maxflow;
           Printf.printf "found min augment: %d\n" min_aug;
           let updated_graph = update_augmentations current_graph path min_aug in
             loop updated_graph;
