@@ -5,7 +5,7 @@
     },
     "editor.formatOnSave": true,
     "ocaml.sandbox": {
-        "kind": "custom",
-        "template": "$prog $args"
+        "kind": "opam",
+        "switch": "ocaml-base-compiler"
     }
 }

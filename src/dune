@@ -1,7 +1,8 @@
 (executable
- (name ftest)
+ (name maxflow)
  ;; (libraries )
  ;; Disable some warnings
  ;; (flags (:standard -w -6))
  ;; Link to executable in main dir
+ (libraries unix)
  (promote (until-clean)))
