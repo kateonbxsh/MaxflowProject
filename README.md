@@ -131,7 +131,7 @@ This is modeled as a **bounded circulation problem** (flow with lower bounds).
 A bounded ciculation model is the generalization of network flow problems, with the added constraint of a lower bounds on edge flows, i.e instead of a simple flow graph with only capacity, each edge `e` has: 
 
 - lower bound `l(e)`
-- capacity `u(e)`
+- capacity `c(e)`
 - flow `f(e)` such that:
 
 <p align="center">
