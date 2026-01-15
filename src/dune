@@ -1,5 +1,5 @@
 (executable
- (name ftest)
+ (name maxflow)
  ;; (libraries )
  ;; Disable some warnings
  ;; (flags (:standard -w -6))

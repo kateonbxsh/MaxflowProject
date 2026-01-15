@@ -3,3 +3,6 @@ ford/
 outfile
 *~
 *.exe
+
+.vscode/
+result/

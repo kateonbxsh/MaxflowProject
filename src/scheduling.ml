@@ -1,7 +1,6 @@
 open Graph
 open Algo
 open Tools
-open Gfile
 
 type flight = {
   id: int;
@@ -9,7 +8,11 @@ type flight = {
   arrival_airport: string;
   departure_time: int;
   arrival_time: int;
+  flight_number: string;
 }
+
+let date_to_minutes s = Scanf.sscanf s "%02d:%02d" (fun h m -> h * 60 + m);;
+let minutes_to_date m = Printf.sprintf "%02d:%02d" (m / 60) (m mod 60);;
 
 let read_flights_from_file path : flight list =
   let ic = open_in path in
@@ -23,15 +26,16 @@ let read_flights_from_file path : flight list =
       if line <> "" then begin
         try
           (* AIRPORT -> AIRPORT | HH:MM -> HH:MM *)
-          Scanf.sscanf line "%s -> %s | %d:%d -> %d:%d"
-            (fun departure_airport arrival_airport dep_h dep_m arr_h arr_m ->
-              let dep_time = dep_h * 60 + dep_m in
-              let arr_time = arr_h * 60 + arr_m in
+          Scanf.sscanf line "%s -> %s | %s -> %s | %s"
+            (fun departure_airport arrival_airport deptime arrtime flight_number ->
+              let dep_time = date_to_minutes deptime in
+              let arr_time = date_to_minutes arrtime in
               let f = { id = !id_counter;
                         departure_airport;
                         arrival_airport;
                         departure_time = dep_time;
-                        arrival_time = arr_time } in
+                        arrival_time = arr_time;
+                        flight_number } in
               flights := f :: !flights;
               id_counter := !id_counter + 1
             )
@@ -198,55 +202,19 @@ let airline_schedule flights k : bounded_flow graph option =
 let export_schedule_graph path (g: bounded_flow graph) flights =
   let ff = open_out path in
 
-  (* Start DOT graph *)
   Printf.fprintf ff "digraph airline_schedule {\n";
   Printf.fprintf ff "  fontname=\"Helvetica,Arial,sans-serif\";\n";
   Printf.fprintf ff "  node [fontname=\"Helvetica,Arial,sans-serif\"];\n";
   Printf.fprintf ff "  edge [fontname=\"Helvetica,Arial,sans-serif\"];\n";
   Printf.fprintf ff "  rankdir=LR;\n";
-  Printf.fprintf ff "  node [shape=circle];\n";
+  Printf.fprintf ff "  node [shape=square];\n";
 
-  (* get airport name from node id *)
-  let node_name id =
-    match List.find_opt (fun f -> si f.id = id || di f.id = id) flights with
-    | Some f -> f.departure_airport
-    | None -> if id = s then "source" else if id = t then "sink" else "unknown"
-  in
-
-  let n = n_fold g (fun a _ -> a + 1) 0 in
-  let ss = n in
-  let tt = n + 1 in
-
-  (* Print each arc with flow as label *)
-  let print_arc (arc: bounded_flow arc) =
-    if arc.lbl.flow > 0 && 
-      arc.src <> s && 
-      arc.tgt <> s && 
-      arc.src <> t && 
-      arc.tgt <> t &&
-      arc.src <> ss &&
-      arc.tgt <> tt then
-      let src_name = node_name arc.src in
-      let tgt_name = node_name arc.tgt in
-      Printf.fprintf ff "  \"%s\" -> \"%s\" [label=\"%d\"];\n" src_name tgt_name arc.lbl.flow
-  in
-
-  e_iter g print_arc;
-
-  Printf.fprintf ff "}\n";
-  close_out ff;;
-
-let export_schedule path (g: bounded_flow graph) flights =
-  let ff = open_out path in
-
-  (* Map node id -> flight, start with di because of di -> si case *)
-  let airport_of_did id =
-    List.find_opt (fun f -> di f.id = id) flights
-  in
-
-  let airport_of_sid id =
+  (* grab flight from sid *)
+  let flight_of_sid id =
     List.find_opt (fun f -> si f.id = id) flights
+
   in
+
 
   let n = n_fold g (fun a _ -> a + 1) 0 in
   let ss = n - 2 in
@@ -275,22 +243,100 @@ let export_schedule path (g: bounded_flow graph) flights =
 
   let airplane_counter = ref 1 in
 
-  (* Generate all airplane paths *)
+  let airplane_initial_flights = ref [] in 
+
+  (* generate all airplane paths *)
   let rec trace_all v =
     match next_arc_from v with
     | None -> ()
     | Some _ ->
         let path = trace_airplane [] v in
-        (* Print the full route *)
+
         let rec print_path = function
           | [] -> ()
           | (arc: bounded_flow arc) :: rest ->
               let airplane = !airplane_counter in
 
               if arc.src = s then
-                (* Case 1: starts *)
+                match flight_of_sid arc.tgt with
+                | Some flight -> airplane_initial_flights := (airplane, flight) :: !airplane_initial_flights
+                | None -> ()
+              else if is_si arc.src && is_di arc.tgt then begin
+                match flight_of_sid arc.src with
+                  | Some flight -> Printf.fprintf ff "  \"%s\" -> \"%s\" [label=\"%s\"];\n" 
+                    flight.departure_airport
+                    flight.arrival_airport
+                    (Printf.sprintf "a%d (%s)" airplane flight.flight_number) 
+                  | None -> ();
+              end;
+
+              print_path rest
+        in
+        print_path path;
+        airplane_counter := !airplane_counter + 1;
+        trace_all v
+  in
+
+  trace_all s;
+  (* print airplane nodes*)
+  Printf.fprintf ff "  node [shape=circle];\n";
+  List.iter (fun (airplane, flight) -> Printf.fprintf ff "  \"a%d\" -> \"%s\";\n" airplane flight.departure_airport) !airplane_initial_flights;
+  Printf.fprintf ff "\n}\n";
+  close_out ff
+
+let export_schedule path (g: bounded_flow graph) flights =
+  let ff = open_out path in
+
+  (* grab flight from sid *)
+  let flight_of_sid id =
+    List.find_opt (fun f -> si f.id = id) flights
+
+  in
+
+
+  let n = n_fold g (fun a _ -> a + 1) 0 in
+  let ss = n - 2 in
+  let tt = n - 1 in
+
+  (* Keep track of which arcs were already used in a path *)
+  let used = Hashtbl.create 100 in
+
+  (* Find next arc with positive flow and not used *)
+  let next_arc_from v =
+    List.find_opt (fun (arc: bounded_flow arc) ->
+      arc.lbl.flow > 0 && not (Hashtbl.mem used (arc.src, arc.tgt)) &&
+      not (List.mem arc.src [ss; tt]) &&
+      not (List.mem arc.tgt [ss; tt; t])
+    ) (out_arcs g v)
+  in
+
+  (* Trace one airplane path starting from s *)
+  let rec trace_airplane path_nodes current =
+    match next_arc_from current with
+    | None -> List.rev path_nodes
+    | Some arc ->
+        Hashtbl.add used (arc.src, arc.tgt) ();
+        trace_airplane (arc :: path_nodes) arc.tgt
+  in
+
+  let airplane_counter = ref 1 in
+
+  (* generate all airplane paths *)
+  let rec trace_all v =
+    match next_arc_from v with
+    | None -> ()
+    | Some _ ->
+        let path = trace_airplane [] v in
+
+        let rec print_path = function
+          | [] -> ()
+          | (arc: bounded_flow arc) :: rest ->
+              let airplane = !airplane_counter in
+
+              if arc.src = s then
+
                 let airport =
-                  match airport_of_sid arc.tgt with
+                  match flight_of_sid arc.tgt with
                   | Some f -> f.departure_airport
                   | None -> "?"
                 in
@@ -300,33 +346,23 @@ let export_schedule path (g: bounded_flow graph) flights =
 
               else if is_di arc.src && is_si arc.tgt then
                 (* Case 2: waits *)
-                let airport =
-                  match airport_of_did arc.src with
-                  | Some f -> f.arrival_airport
-                  | None -> "?"
-                in
-                Printf.fprintf ff
-                  "Airplane %d waits at airport %s\n"
-                  airplane airport
+                match flight_of_sid arc.tgt with
+                  | Some next_flight -> Printf.fprintf ff
+                  "Airplane %d waits at airport %s for flight %s at %s\n"
+                  airplane next_flight.departure_airport next_flight.flight_number (minutes_to_date next_flight.departure_time) 
+                  | None -> ();
 
               else begin
-                let from_airport =
-                  match airport_of_sid arc.src with
-                  | Some f -> f.departure_airport
-                  | None -> "?"
-                and to_airport = 
-                  match airport_of_did arc.tgt with
-                  | Some f -> f.arrival_airport
-                  | None -> "?"
-                in
-                Printf.fprintf ff
-                  "Airplane %d: %s -> %s\n"
-                  airplane from_airport to_airport;
-                if rest = [] then begin
-                Printf.fprintf ff
-                  "Airplane %d schedule ends at airport %s\n"
-                  airplane to_airport;
-                end;
+                match flight_of_sid arc.src with
+                  | Some flight -> Printf.fprintf ff
+                      "Airplane %d: %s -> %s (%s)\n"
+                      airplane flight.departure_airport flight.arrival_airport flight.flight_number;
+                    if rest = [] then begin
+                    Printf.fprintf ff
+                      "Airplane %d schedule ends at airport %s\n"
+                      airplane flight.arrival_airport;
+                    end;
+                  | None -> ();
               end;
 
               print_path rest
@@ -340,4 +376,3 @@ let export_schedule path (g: bounded_flow graph) flights =
 
   trace_all s;
   close_out ff
-

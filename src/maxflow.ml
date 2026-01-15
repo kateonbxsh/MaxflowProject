@@ -30,16 +30,16 @@ let () =
 
     let graph = from_file infile in
     let result = apply_ford_fulkerson (flow_from_string_graph graph) source sink in
-    export outfile (printable_flow_graph result);
+    export (outfile ^ ".dot") (printable_flow_graph result);
 
     (match svgfile with
-     | Some f -> ignore (system (sprintf "dot -Tsvg %s -o %s" outfile f))
+     | Some f -> ignore (system (sprintf "dot -Tsvg %s.dot -o %s.svg" outfile f))
      | None -> ());
 
   end
   else if mode = "scheduling" then begin
     if Array.length Sys.argv < 5 then begin
-      printf "Usage: %s scheduling infile crew_count outfile [svgfile]\n" Sys.argv.(0);
+      printf "Usage: %s scheduling infile airplane_count outfile [svgfile]\n" Sys.argv.(0);
       exit 1
     end;
 
@@ -59,13 +59,12 @@ let () =
         printf "No feasible schedule found.\n";
         exit 1
     | Some g ->
-        export_schedule_graph (outfile ^ ".txt") g flights;
+        export_schedule_graph (outfile ^ ".dot") g flights;
         export_schedule (outfile ^ ".schedule") g flights;
 
         (match svgfile with
          | Some f ->
-             export_schedule (outfile ^ ".dot") g flights;
-             ignore (system (sprintf "dot -Tsvg %s.dot -o %s" outfile f))
+             ignore (system (sprintf "dot -Tsvg %s.dot -o %s.svg" outfile f))
          | None -> ())
   end
   else begin

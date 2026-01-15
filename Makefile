@@ -1,14 +1,10 @@
 .PHONY: all build format edit demo clean
 
-src?=0
-dst?=5
-graph?=graph1.txt
-
 all: build
 
 build:
 	@echo "\n   🚨  COMPILING  🚨 \n"
-	dune build src/ftest.exe
+	dune build src/maxflow.exe
 	ls src/*.exe > /dev/null && ln -fs src/*.exe .
 
 format:
@@ -17,10 +13,18 @@ format:
 edit:
 	code . -n
 
-demo: build
-	@echo "\n   ⚡  EXECUTING  ⚡\n"
-	./ftest.exe graphs/${graph} $(src) $(dst) outfile
-	@echo "\n   🥁  RESULT (content of outfile)  🥁\n"
+demo-flow: build
+	mkdir -p result
+	@echo "\n Running Ford-Fulkerson demo \n"
+	./maxflow.exe flow graphs/graph7.txt 1 9 result/result-flowdemo result/result-flowdemo-svg
+	@echo "\n Result stored in result/\n"
+	@cat outfile
+
+demo-scheduling: build
+	mkdir -p result
+	@echo "\n Running Airplane Scheduling demo \n"
+	./maxflow.exe scheduling scheduling/schedule3.txt 9 result/result-schdemo result/result-schdemo-svg
+	@echo "\n Result stored in result/\n"
 	@cat outfile
 
 clean:

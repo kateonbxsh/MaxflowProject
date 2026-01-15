@@ -6,6 +6,7 @@ type flight = {
   arrival_airport: string;
   departure_time: int;
   arrival_time: int;
+  flight_number: string;
 }
 
 type bounded_flow = {
